@@ -1,20 +1,36 @@
-// App.js
-import React from 'react';
-import { Provider } from 'react-redux';
-import store from './components/store';
-import TaskList from './components/TaskList';
+import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-const App = () => {
+import { Navbar, Nav, Container } from 'react-bootstrap';
+
+// Importer les packages nécessaires
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faAddressBook} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+// Ajouter les icônes à la bibliothèque
+library.add(faAddressBook);
+
+function App() {
+
   return (
-    <Provider store={store}>
-      <div>
-        <h1>Gestion de tâches avec Redux et JSON Server</h1>
+    <>
+    <div className="App ">
+      <Navbar bg="primary" data-bs-theme="dark">
+        <Container>
+       
+        <FontAwesomeIcon icon={faAddressBook} size="2x" color="white"/>&nbsp; &nbsp;  
+          <Navbar.Brand href="#home">Contacts Manager</Navbar.Brand>
+          <Nav className="me-auto">
+            <Nav.Link href="#home">V1.0</Nav.Link>
+          </Nav>
+        </Container>
+      </Navbar>
 
-
-        <TaskList />
-      </div>
-    </Provider>
+    </div>
+    </>
   );
-};
+}
 
 export default App;
