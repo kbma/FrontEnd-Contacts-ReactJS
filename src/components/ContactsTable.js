@@ -1,6 +1,7 @@
 //ContactsTable.js
 import React, { useState } from 'react';
-import { Table, Pagination, Badge, Form } from 'react-bootstrap';
+import { Table, Pagination, Badge, Form ,Button} from 'react-bootstrap';
+import * as XLSX from 'xlsx';
 
 const ContactsTable = ({ contacts }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +43,17 @@ const ContactsTable = ({ contacts }) => {
       setSortBy(key);
       setSortOrder('asc');
     }
+  };
+
+  //Mettre en forme le terme cherché
+  const highlightText = (text, query) => {
+    if (typeof text !== 'string') {
+      text = String(text);
+    }
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? <strong key={i}>{part}</strong> : part
+    );
   };
 
   return (
@@ -89,8 +101,12 @@ const ContactsTable = ({ contacts }) => {
                   height="50"
                 />
               </td>
-              <td>{contact.nom}</td>
-              <td>{contact.tel}</td>
+              <td>
+                {highlightText(contact.nom, searchTerm)}
+              </td>
+              <td>
+                {highlightText(contact.tel, searchTerm)}
+              </td>
             </tr>
           ))}
         </tbody>
