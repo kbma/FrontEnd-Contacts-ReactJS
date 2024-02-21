@@ -10,6 +10,9 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faAddressBook } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 // Ajouter les icônes à la bibliothèque
 library.add(faAddressBook);
@@ -51,12 +54,42 @@ function App() {
         // La requête a réussi, mettez à jour votre liste de contacts
         fetchContacts(); // Actualisez la liste des contacts après l'ajout
         console.log('Contact ajouté avec succès.');
+        toast.success('Contact ajouté avec succès.', {
+          position: 'top-right',
+          autoClose: 3000, // Duration in milliseconds
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+
       } else {
         // La requête a échoué, traitez les erreurs si nécessaire
         console.error('Erreur lors de l\'ajout du contact.');
+        toast.error('Erreur lors de l\'ajout du contact.', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+
       }
     } catch (error) {
       console.error('Erreur lors de la requête d\'ajout de contact :', error);
+      toast.error('Erreur lors de la requête d\'ajout de contact.', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+
     }
 
     // Fermez le modal après l'ajout du contact, si nécessaire
@@ -98,6 +131,7 @@ function App() {
         </div>
 
       </div>
+      <ToastContainer />
     </>
   );
 }
