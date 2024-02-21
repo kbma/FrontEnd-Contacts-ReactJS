@@ -1,10 +1,12 @@
+//ContactsTable.js
 import React, { useState } from 'react';
-import { Table, Pagination, Badge } from 'react-bootstrap';
+import { Table, Pagination, Badge, Form } from 'react-bootstrap';
 
 const ContactsTable = ({ contacts }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState('');
   const contactsPerPage = 5;
 
   if (!contacts || contacts.length === 0) {
@@ -13,13 +15,21 @@ const ContactsTable = ({ contacts }) => {
 
   const indexOfLastContact = currentPage * contactsPerPage;
   const indexOfFirstContact = indexOfLastContact - contactsPerPage;
-  const sortedContacts = contacts.slice().sort((a, b) => {
-    if (sortBy === 'nom') {
-      return sortOrder === 'asc' ? a.nom.localeCompare(b.nom) : b.nom.localeCompare(a.nom);
-    }
-    // Ajoutez d'autres critères de tri si nécessaire
-    return 0;
-  });
+  const sortedContacts = contacts.filter(
+    (contact) =>
+      contact.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.tel.toString().includes(searchTerm)
+  ).sort((a, b) => {
+      if (sortBy === 'numero') {
+        return sortOrder === 'asc' ? a.numero - b.numero : b.numero - a.numero;
+      } else if (sortBy === 'nom') {
+        return sortOrder === 'asc' ? a.nom.localeCompare(b.nom) : b.nom.localeCompare(a.nom);
+      } else if (sortBy === 'tel') {
+        return sortOrder === 'asc' ? a.tel - b.tel : b.tel - a.tel;
+      }
+      // Ajoutez d'autres critères de tri si nécessaire
+      return 0;
+    });
 
   const currentContacts = sortedContacts.slice(indexOfFirstContact, indexOfLastContact);
   const totalPages = Math.ceil(sortedContacts.length / contactsPerPage);
@@ -40,6 +50,23 @@ const ContactsTable = ({ contacts }) => {
         Votre liste des contacts contient{' '}
         <Badge variant="primary">{contacts.length}</Badge> contacts
       </h2>
+
+      <p>        
+      contacts triés par: <span class="badge bg-primary">{sortBy ? "" + sortBy : ""}</span>
+      </p>
+
+
+      <Form>
+        <Form.Group controlId="searchTerm">
+          <Form.Control
+            type="text"
+            placeholder="Rechercher par nom"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </Form.Group>
+      </Form>
+      <div className='m-2'></div>
 
       <Table striped bordered hover>
         <thead>
@@ -68,6 +95,7 @@ const ContactsTable = ({ contacts }) => {
           ))}
         </tbody>
       </Table>
+
       <Pagination>
         {Array.from({ length: totalPages }).map((_, index) => (
           <Pagination.Item
