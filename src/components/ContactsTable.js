@@ -77,21 +77,62 @@ const ContactsTable = ({ contacts }) => {
     XLSX.writeFile(wb, 'contacts.xlsx');
   };
 
-//Pour exporter pdf
+
+// Function to handle exporting to PDF
 const handleExportPDF = () => {
+  // Create a new jsPDF instance
   const doc = new jsPDF();
-  doc.text('Liste des contacts', 10, 10);
+
+  // Set text color to red
+  doc.setTextColor(255, 0, 0);
+
+  // Set font style to bold
+  doc.setFont('bold');
+
+  // Add title in red and bold
+  doc.setFontSize(20);
+  doc.text('Liste des contacts', 100, 10, { align: 'center' });
+
+  // Reset text color and font style
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('normal');
+
+  // Add date and time at the top of the page
+  const today = new Date();
+  const newdat = "Imprimé le: " + today.toLocaleString();
+  doc.text(newdat, 10, 20);
+
+  // Add an image at a specific location on the page
+  var img = new Image();
+  img.src = 'img/elife.jpg';
+  doc.addImage(img, 'png', 150, 10, 20, 15);
+
+  // Add some space before the table
+  const spaceBeforeTable = 30;
+
+
   doc.autoTable({
     head: [['Numéro', 'Avatar', 'Nom', 'Téléphone']],
-    body: currentContacts.map((contact, index) => [
+    body: contacts.map((contact, index) => [
       indexOfFirstContact + index + 1,
-      contact.avatarUrl || 'https://picsum.photos/200/300',
+      { image: contact.avatarUrl || 'https://picsum.photos/200/300', width: 20, height: 20 },
       contact.nom,
       contact.tel,
     ]),
+    startY: spaceBeforeTable, // Adjust the Y-coordinate to add space
+    
+    margin: { top: 10 }, // Add extra margin to accommodate the header
   });
+
+  // Save the PDF with the specified filename
   doc.save('contacts.pdf');
 };
+
+
+// Note: Make sure to adjust the paths and styling based on your specific requirements and project structure.
+
+
+  
 
   return (
     <>
