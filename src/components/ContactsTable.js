@@ -1,7 +1,13 @@
 //ContactsTable.js
 import React, { useState } from 'react';
-import { Table, Pagination, Badge, Form ,Button} from 'react-bootstrap';
+import { Table, Pagination, Badge, Form, Button } from 'react-bootstrap';
 import * as XLSX from 'xlsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileExcel , faFilePdf} from '@fortawesome/free-solid-svg-icons';
+
+// JsPDF
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const ContactsTable = ({ contacts }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,16 +27,16 @@ const ContactsTable = ({ contacts }) => {
       contact.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.tel.toString().includes(searchTerm)
   ).sort((a, b) => {
-      if (sortBy === 'numero') {
-        return sortOrder === 'asc' ? a.numero - b.numero : b.numero - a.numero;
-      } else if (sortBy === 'nom') {
-        return sortOrder === 'asc' ? a.nom.localeCompare(b.nom) : b.nom.localeCompare(a.nom);
-      } else if (sortBy === 'tel') {
-        return sortOrder === 'asc' ? a.tel - b.tel : b.tel - a.tel;
-      }
-      // Ajoutez d'autres critères de tri si nécessaire
-      return 0;
-    });
+    if (sortBy === 'numero') {
+      return sortOrder === 'asc' ? a.numero - b.numero : b.numero - a.numero;
+    } else if (sortBy === 'nom') {
+      return sortOrder === 'asc' ? a.nom.localeCompare(b.nom) : b.nom.localeCompare(a.nom);
+    } else if (sortBy === 'tel') {
+      return sortOrder === 'asc' ? a.tel - b.tel : b.tel - a.tel;
+    }
+    // Ajoutez d'autres critères de tri si nécessaire
+    return 0;
+  });
 
   const currentContacts = sortedContacts.slice(indexOfFirstContact, indexOfLastContact);
   const totalPages = Math.ceil(sortedContacts.length / contactsPerPage);
@@ -56,6 +62,37 @@ const ContactsTable = ({ contacts }) => {
     );
   };
 
+
+  const handleExportExcel = () => {
+    const dataToExport = sortedContacts.map((contact) => ({
+      Numéro: indexOfFirstContact + sortedContacts.indexOf(contact) + 1,
+      Avatar: contact.avatarUrl || 'https://picsum.photos/200/300',
+      Nom: contact.nom,
+      Téléphone: contact.tel,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
+    XLSX.writeFile(wb, 'contacts.xlsx');
+  };
+
+//Pour exporter pdf
+const handleExportPDF = () => {
+  const doc = new jsPDF();
+  doc.text('Liste des contacts', 10, 10);
+  doc.autoTable({
+    head: [['Numéro', 'Avatar', 'Nom', 'Téléphone']],
+    body: currentContacts.map((contact, index) => [
+      indexOfFirstContact + index + 1,
+      contact.avatarUrl || 'https://picsum.photos/200/300',
+      contact.nom,
+      contact.tel,
+    ]),
+  });
+  doc.save('contacts.pdf');
+};
+
   return (
     <>
       <h2 className="text-muted">
@@ -63,8 +100,8 @@ const ContactsTable = ({ contacts }) => {
         <Badge variant="primary">{contacts.length}</Badge> contacts
       </h2>
 
-      <p>        
-      contacts triés par: <span class="badge bg-primary">{sortBy ? "" + sortBy : ""}</span>
+      <p>
+        contacts triés par: <span class="badge bg-primary">{sortBy ? "" + sortBy : ""}</span>
       </p>
 
 
@@ -79,7 +116,15 @@ const ContactsTable = ({ contacts }) => {
         </Form.Group>
       </Form>
       <div className='m-2'></div>
+      <Button variant="success" onClick={handleExportExcel}>
+        <FontAwesomeIcon icon={faFileExcel} className="mr-1" /> Exporter en Excel
+      </Button>
+      &nbsp;
 
+      <Button variant="primary" onClick={handleExportPDF} className="ml-2">
+        <FontAwesomeIcon icon={faFilePdf} className="mr-1" /> Exporter en PDF
+      </Button>
+      <div className='m-2'></div>
       <Table striped bordered hover>
         <thead>
           <tr>
