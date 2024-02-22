@@ -127,7 +127,7 @@ function App() {
             handleAddContact={handleAddContact}
           />
 
-          <ContactsTable contacts={contactsData} />
+<ContactsTable contacts={contactsData} fetchContacts={fetchContacts} />
         </div>
 
       </div>

@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { Table, Pagination, Badge, Form, Button } from 'react-bootstrap';
 import * as XLSX from 'xlsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExcel , faFilePdf} from '@fortawesome/free-solid-svg-icons';
-
+import { faFileExcel , faFilePdf , faEdit } from '@fortawesome/free-solid-svg-icons';
+import DeleteContactModal from './DeleteContactModal';
+import EditContactModal from './EditContactModal';   
+import axios from 'axios';
 // JsPDF
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -14,8 +16,28 @@ const ContactsTable = ({ contacts }) => {
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [contactToEdit, setContactToEdit] = useState(null);
+
   const contactsPerPage = 5;
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contactIdToDelete, setContactIdToDelete] = useState(null);
+  const [contactsData, setContactsData] = useState([]);
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/contact/lister');
+      if (!response.ok) {
+        throw new Error(`Erreur lors de la récupération des contacts: ${response.statusText}`);
+      }
+      const data = await response.json();
+      // Suppose que la liste des contacts est dans un objet nommé "liste"
+      setContactsData(data.liste || []);
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
   if (!contacts || contacts.length === 0) {
     return <p>No contacts available.</p>;
   }
@@ -40,6 +62,12 @@ const ContactsTable = ({ contacts }) => {
 
   const currentContacts = sortedContacts.slice(indexOfFirstContact, indexOfLastContact);
   const totalPages = Math.ceil(sortedContacts.length / contactsPerPage);
+
+
+
+
+
+
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const handleSort = (key) => {
@@ -82,6 +110,7 @@ const ContactsTable = ({ contacts }) => {
 const handleExportPDF = () => {
   // Create a new jsPDF instance
   const doc = new jsPDF();
+  
 
   // Set text color to red
   doc.setTextColor(255, 0, 0);
@@ -115,7 +144,7 @@ const handleExportPDF = () => {
     head: [['Numéro', 'Avatar', 'Nom', 'Téléphone']],
     body: contacts.map((contact, index) => [
       indexOfFirstContact + index + 1,
-      { image: contact.avatarUrl || 'https://picsum.photos/200/300', width: 20, height: 20 },
+      { image: 'https://picsum.photos/200/300', width: 20, height: 20 },
       contact.nom,
       contact.tel,
     ]),
@@ -124,13 +153,63 @@ const handleExportPDF = () => {
     margin: { top: 10 }, // Add extra margin to accommodate the header
   });
 
+  // Add page numbering on all pages
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.text( 'Page '+ i + '/' + pageCount, 180, doc.internal.pageSize.height - 10);
+  }
   // Save the PDF with the specified filename
   doc.save('contacts.pdf');
 };
 
 
-// Note: Make sure to adjust the paths and styling based on your specific requirements and project structure.
+const handleDeleteClick = (contactId) => {
+  setContactIdToDelete(contactId);
+  setShowDeleteModal(true);
+};
 
+const handleDeleteContact = async (contactId) => {
+  try {
+    // Make the API call to delete the contact
+    await axios.delete(`http://localhost:3001/contact/${contactId}/supprimer`);
+
+    // Handle success, e.g., update your contact list
+    console.log('Contact deleted successfully');
+    window.location.reload(); // Reload the entire page
+  } catch (error) {
+    // Handle error, show an error message, etc.
+    console.error('Error deleting contact', error);
+  }
+};
+
+const handleCloseDeleteModal = () => {
+  setShowDeleteModal(false);
+  setContactIdToDelete(null);
+};
+
+const handleEditClick = (contact) => {
+  setContactToEdit(contact);
+  setShowEditModal(true);
+};
+
+const handleEditContact = async (contactId, editedData) => {
+  try {
+    await axios.put(`http://localhost:3001/contact/${contactId}/modifier`, editedData);
+    fetchContacts();
+    console.log('Contact edited successfully');
+  } catch (error) {
+    console.error('Error editing contact', error);
+  } finally {
+    setShowEditModal(false);
+    setContactToEdit(null);
+  }
+};
+
+const handleCloseEditModal = () => {
+  setShowEditModal(false);
+  setContactToEdit(null);
+};
 
   
 
@@ -193,6 +272,41 @@ const handleExportPDF = () => {
               <td>
                 {highlightText(contact.tel, searchTerm)}
               </td>
+              <td>
+                {/* Example button to trigger the modal */}
+                <Button variant="danger" onClick={() => handleDeleteClick(contact._id)}>
+                  Supprimer le contact
+                </Button>
+                <Button variant="info" onClick={() => handleEditClick(contact)} className="ml-2">
+                  <FontAwesomeIcon icon={faEdit} className="mr-1" /> Modifier le contact
+                </Button>
+
+
+                {/* DeleteContactModal usage */}
+                {showDeleteModal && (
+                  <DeleteContactModal
+                    show={showDeleteModal}
+                    handleClose={handleCloseDeleteModal}
+                    deleteContact={handleDeleteContact}
+                    contactId={contactIdToDelete}
+
+                  />
+                )}
+{showEditModal && (
+        <EditContactModal
+          show={showEditModal}
+          handleClose={handleCloseEditModal}
+          editContact={handleEditContact}
+          contact={contactToEdit}
+        />
+      )}
+
+
+
+              </td>
+
+
+
             </tr>
           ))}
         </tbody>
