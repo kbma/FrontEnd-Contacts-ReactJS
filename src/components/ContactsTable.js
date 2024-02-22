@@ -1,11 +1,11 @@
 //ContactsTable.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Pagination, Badge, Form, Button } from 'react-bootstrap';
 import * as XLSX from 'xlsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExcel , faFilePdf , faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faFileExcel, faFilePdf, faEdit } from '@fortawesome/free-solid-svg-icons';
 import DeleteContactModal from './DeleteContactModal';
-import EditContactModal from './EditContactModal';   
+import EditContactModal from './EditContactModal';
 import axios from 'axios';
 // JsPDF
 import jsPDF from 'jspdf';
@@ -27,6 +27,7 @@ const ContactsTable = ({ contacts }) => {
   const [contactsData, setContactsData] = useState([]);
   const fetchContacts = async () => {
     try {
+     // console.log("ok")
       const response = await fetch('http://localhost:3001/contact/lister');
       if (!response.ok) {
         throw new Error(`Erreur lors de la récupération des contacts: ${response.statusText}`);
@@ -38,6 +39,8 @@ const ContactsTable = ({ contacts }) => {
       console.error(error.message);
     }
   };
+
+
   if (!contacts || contacts.length === 0) {
     return <p>No contacts available.</p>;
   }
@@ -62,12 +65,6 @@ const ContactsTable = ({ contacts }) => {
 
   const currentContacts = sortedContacts.slice(indexOfFirstContact, indexOfLastContact);
   const totalPages = Math.ceil(sortedContacts.length / contactsPerPage);
-
-
-
-
-
-
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const handleSort = (key) => {
@@ -106,112 +103,110 @@ const ContactsTable = ({ contacts }) => {
   };
 
 
-// Function to handle exporting to PDF
-const handleExportPDF = () => {
-  // Create a new jsPDF instance
-  const doc = new jsPDF();
-  
-
-  // Set text color to red
-  doc.setTextColor(255, 0, 0);
-
-  // Set font style to bold
-  doc.setFont('bold');
-
-  // Add title in red and bold
-  doc.setFontSize(20);
-  doc.text('Liste des contacts', 100, 10, { align: 'center' });
-
-  // Reset text color and font style
-  doc.setTextColor(0, 0, 0);
-  doc.setFont('normal');
-
-  // Add date and time at the top of the page
-  const today = new Date();
-  const newdat = "Imprimé le: " + today.toLocaleString();
-  doc.text(newdat, 10, 20);
-
-  // Add an image at a specific location on the page
-  var img = new Image();
-  img.src = 'img/elife.jpg';
-  doc.addImage(img, 'png', 150, 10, 20, 15);
-
-  // Add some space before the table
-  const spaceBeforeTable = 30;
+  // Function to handle exporting to PDF
+  const handleExportPDF = () => {
+    // Create a new jsPDF instance
+    const doc = new jsPDF();
 
 
-  doc.autoTable({
-    head: [['Numéro', 'Avatar', 'Nom', 'Téléphone']],
-    body: contacts.map((contact, index) => [
-      indexOfFirstContact + index + 1,
-      { image: 'https://picsum.photos/200/300', width: 20, height: 20 },
-      contact.nom,
-      contact.tel,
-    ]),
-    startY: spaceBeforeTable, // Adjust the Y-coordinate to add space
-    
-    margin: { top: 10 }, // Add extra margin to accommodate the header
-  });
+    // Set text color to red
+    doc.setTextColor(255, 0, 0);
 
-  // Add page numbering on all pages
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.text( 'Page '+ i + '/' + pageCount, 180, doc.internal.pageSize.height - 10);
-  }
-  // Save the PDF with the specified filename
-  doc.save('contacts.pdf');
-};
+    // Set font style to bold
+    doc.setFont('bold');
+
+    // Add title in red and bold
+    doc.setFontSize(20);
+    doc.text('Liste des contacts', 100, 10, { align: 'center' });
+
+    // Reset text color and font style
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('normal');
+
+    // Add date and time at the top of the page
+    const today = new Date();
+    const newdat = "Imprimé le: " + today.toLocaleString();
+    doc.text(newdat, 10, 20);
+
+    // Add an image at a specific location on the page
+    var img = new Image();
+    img.src = 'img/elife.jpg';
+    doc.addImage(img, 'png', 150, 10, 20, 15);
+
+    // Add some space before the table
+    const spaceBeforeTable = 30;
 
 
-const handleDeleteClick = (contactId) => {
-  setContactIdToDelete(contactId);
-  setShowDeleteModal(true);
-};
+    doc.autoTable({
+      head: [['Numéro', 'Avatar', 'Nom', 'Téléphone']],
+      body: contacts.map((contact, index) => [
+        indexOfFirstContact + index + 1,
+        { image: 'https://picsum.photos/200/300', width: 20, height: 20 },
+        contact.nom,
+        contact.tel,
+      ]),
+      startY: spaceBeforeTable, // Adjust the Y-coordinate to add space
 
-const handleDeleteContact = async (contactId) => {
-  try {
-    // Make the API call to delete the contact
-    await axios.delete(`http://localhost:3001/contact/${contactId}/supprimer`);
+      margin: { top: 10 }, // Add extra margin to accommodate the header
+    });
 
-    // Handle success, e.g., update your contact list
-    console.log('Contact deleted successfully');
-    window.location.reload(); // Reload the entire page
-  } catch (error) {
-    // Handle error, show an error message, etc.
-    console.error('Error deleting contact', error);
-  }
-};
+    // Add page numbering on all pages
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.text('Page ' + i + '/' + pageCount, 180, doc.internal.pageSize.height - 10);
+    }
+    // Save the PDF with the specified filename
+    doc.save('contacts.pdf');
+  };
 
-const handleCloseDeleteModal = () => {
-  setShowDeleteModal(false);
-  setContactIdToDelete(null);
-};
 
-const handleEditClick = (contact) => {
-  setContactToEdit(contact);
-  setShowEditModal(true);
-};
+  const handleDeleteClick = (contactId) => {
+    setContactIdToDelete(contactId);
+    setShowDeleteModal(true);
+  };
 
-const handleEditContact = async (contactId, editedData) => {
-  try {
-    await axios.put(`http://localhost:3001/contact/${contactId}/modifier`, editedData);
-    fetchContacts();
-    console.log('Contact edited successfully');
-  } catch (error) {
-    console.error('Error editing contact', error);
-  } finally {
+  const handleDeleteContact = async (contactId) => {
+    try {
+      // Make the API call to delete the contact
+      await axios.delete(`http://localhost:3001/contact/${contactId}/supprimer`);
+
+      // Handle success, e.g., update your contact list
+      console.log('Contact deleted successfully');
+      window.location.reload(); // Reload the entire page
+    } catch (error) {
+      // Handle error, show an error message, etc.
+      console.error('Error deleting contact', error);
+    }
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setContactIdToDelete(null);
+  };
+
+  const handleEditClick = (contact) => {
+    setContactToEdit(contact);
+
+    setShowEditModal(true);
+  };
+  const handleEditContact = async (contactId, editedData) => {
+    try {
+      await axios.put(`http://localhost:3001/contact/${contactId}/modifier`, editedData);
+      fetchContacts();
+      console.log('Contact edited successfully');
+    } catch (error) {
+      console.error('Error editing contact', error);
+    } finally {
+      setShowEditModal(false);
+      setContactToEdit(null);
+    }
+  };
+
+  const handleCloseEditModal = () => {
     setShowEditModal(false);
     setContactToEdit(null);
-  }
-};
-
-const handleCloseEditModal = () => {
-  setShowEditModal(false);
-  setContactToEdit(null);
-};
-
-  
+  };
 
   return (
     <>
@@ -221,10 +216,8 @@ const handleCloseEditModal = () => {
       </h2>
 
       <p>
-        contacts triés par: <span class="badge bg-primary">{sortBy ? "" + sortBy : ""}</span>
+        contacts triés par: <span className="badge bg-primary">{sortBy ? "" + sortBy : ""}</span>
       </p>
-
-
       <Form>
         <Form.Group controlId="searchTerm">
           <Form.Control
@@ -240,7 +233,6 @@ const handleCloseEditModal = () => {
         <FontAwesomeIcon icon={faFileExcel} className="mr-1" /> Exporter en Excel
       </Button>
       &nbsp;
-
       <Button variant="primary" onClick={handleExportPDF} className="ml-2">
         <FontAwesomeIcon icon={faFilePdf} className="mr-1" /> Exporter en PDF
       </Button>
@@ -280,8 +272,6 @@ const handleCloseEditModal = () => {
                 <Button variant="info" onClick={() => handleEditClick(contact)} className="ml-2">
                   <FontAwesomeIcon icon={faEdit} className="mr-1" /> Modifier le contact
                 </Button>
-
-
                 {/* DeleteContactModal usage */}
                 {showDeleteModal && (
                   <DeleteContactModal
@@ -292,21 +282,15 @@ const handleCloseEditModal = () => {
 
                   />
                 )}
-{showEditModal && (
-        <EditContactModal
-          show={showEditModal}
-          handleClose={handleCloseEditModal}
-          editContact={handleEditContact}
-          contact={contactToEdit}
-        />
-      )}
-
-
-
+                {showEditModal && (
+                  <EditContactModal
+                    show={showEditModal}
+                    handleClose={handleCloseEditModal}
+                    editContact={handleEditContact}
+                    contact={contactToEdit}
+                  />
+                )}
               </td>
-
-
-
             </tr>
           ))}
         </tbody>

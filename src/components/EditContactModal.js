@@ -23,7 +23,7 @@ const EditContactModal = ({ show, handleClose, editContact, contact }) => {
       // Perform validation or additional logic as needed
 
       // Call the function to edit the contact
-      await editContact(contact._id, editedData);
+      await editContact(contact._id, editedData);     
 
       toast.success('Contact modifié avec succès.', {
         position: 'top-right',
